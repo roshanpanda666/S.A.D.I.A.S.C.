@@ -5,15 +5,15 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-def sendmessage():
+def sendmessage(number):
     account_sid = os.getenv('TWILIO_SID')
     auth_token = os.getenv('TWILIO_TOKEN')
     client = Client(account_sid, auth_token)
 
     message = client.messages.create(
-        from_='+15076280790',  # Twilio sandbox number
-        body='person is detected',
-        to='+917608946420'     # Your recipient number
+        from_='+15076280790',
+        body='Person is detected',
+        to=number
     )
 
-    print(message.sid)
+    print("Message sent:", message.sid)

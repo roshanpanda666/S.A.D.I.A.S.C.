@@ -13,7 +13,7 @@ pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5)
 message_sent = False
 sound_played = False
 
-# Default sound function (can be swapped)
+# Default sound function (can be swapped from GUI)
 current_sound_function = Playsound1
 
 def detect_persons(frame):
@@ -26,7 +26,7 @@ def detect_persons(frame):
     else:
         return False, frame
 
-def run_camera_detection(camera_index=0):
+def run_camera_detection(camera_index=0, number=None):
     global message_sent, sound_played
 
     cap = cv2.VideoCapture(camera_index)
@@ -48,8 +48,8 @@ def run_camera_detection(camera_index=0):
                 threading.Thread(target=current_sound_function).start()
                 sound_played = True
 
-            if not message_sent:
-                threading.Thread(target=sendmessage).start()
+            if not message_sent and number:
+                threading.Thread(target=sendmessage, args=(number,)).start()
                 message_sent = True
         else:
             sound_played = False
