@@ -2,6 +2,7 @@ import customtkinter as ctk
 from detect import run_camera_detection, current_sound_function
 import detect
 from sound import Playsound1,playsound2
+from keypress import press
 # Initialize CustomTkinter
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -37,6 +38,9 @@ def sound2():
 cam_label = ctk.CTkLabel(app, text="Selected Camera: 0", font=ctk.CTkFont(size=16))
 cam_label.place(x=110, y=30)
 
+def stop_detection():
+    press()
+
 # Horizontal spacing variables
 btn_width = 80
 padding = 20
@@ -57,9 +61,14 @@ sound_btn.place(x=120, y=140)
 
 sound_btn2 = ctk.CTkButton(app, text="sound 2",  command=sound2,width=btn_width)
 sound_btn2.place(x=220, y=140)
+
+
 # Start detection button
 start_btn = ctk.CTkButton(app, text="Start Detection", fg_color="green", hover_color="darkgreen", command=start_detection)
-start_btn.place(x=120, y=180)
+start_btn.place(x=120, y=200)
+
+start_btn = ctk.CTkButton(app, text="Stop Detection", fg_color="red", hover_color="darkred", command=stop_detection)
+start_btn.place(x=120, y=240)
 
 # Run app
 app.mainloop()

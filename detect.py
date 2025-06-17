@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 from sound import Playsound1
 from message import sendmessage
+
 # Initialize MediaPipe pose detection modules globally
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
