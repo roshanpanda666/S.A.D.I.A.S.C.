@@ -12,7 +12,7 @@ def sendmessage():
 
     message = client.messages.create(
         from_='+15076280790',  # Twilio sandbox number
-        body='hello world',
+        body='person is detected',
         to='+917608946420'     # Your recipient number
     )
 
