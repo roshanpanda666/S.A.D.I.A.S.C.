@@ -1,16 +1,19 @@
 import cv2
 import mediapipe as mp
+import threading
 from sound import Playsound1
 from message import sendmessage
 
-# Initialize MediaPipe pose detection modules globally
+# Initialize MediaPipe pose detection
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
-
-# Pose estimation setup
 pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5)
 
-# Default sound function — can be switched dynamically
+# Flags to prevent repeated triggering
+message_sent = False
+sound_played = False
+
+# Default sound function (can be swapped)
 current_sound_function = Playsound1
 
 def detect_persons(frame):
@@ -24,6 +27,8 @@ def detect_persons(frame):
         return False, frame
 
 def run_camera_detection(camera_index=0):
+    global message_sent, sound_played
+
     cap = cv2.VideoCapture(camera_index)
 
     while cap.isOpened():
@@ -39,8 +44,16 @@ def run_camera_detection(camera_index=0):
         cv2.imshow("Person Detection", output_frame)
 
         if detected:
-            current_sound_function()
-            sendmessage()
+            if not sound_played:
+                threading.Thread(target=current_sound_function).start()
+                sound_played = True
+
+            if not message_sent:
+                threading.Thread(target=sendmessage).start()
+                message_sent = True
+        else:
+            sound_played = False
+            message_sent = False
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
@@ -48,6 +61,6 @@ def run_camera_detection(camera_index=0):
     cap.release()
     cv2.destroyAllWindows()
 
-# Optional: run directly
+# Optional direct run
 if __name__ == "__main__":
     run_camera_detection()
