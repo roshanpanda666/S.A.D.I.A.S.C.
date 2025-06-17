@@ -1,17 +1,20 @@
 import customtkinter as ctk
+import threading
 from detect import run_camera_detection, current_sound_function
 import detect
 from sound import Playsound1, playsound2
 from keypress import press
 from message import sendmessage
+
 # Initialize CustomTkinter
-app = ctk.CTk(fg_color="#12141A")  # Set futuristic dark background
+app = ctk.CTk(fg_color="#12141A")
 app.title("S.A.D.I.A.S.C. Home Interface")
 app.geometry("540x540")
 
 # Variables
 camera_index = ctk.IntVar(value=0)
 volume_level = ctk.DoubleVar(value=50)
+is_detection_running = False  # Thread-safety flag
 
 # --- Hover Border Simulation ---
 def apply_hover_border_effect(button, normal_color, hover_color):
@@ -28,9 +31,22 @@ def set_camera(idx):
     cam_label.configure(text=f"Selected Camera: {idx}")
 
 def start_detection():
+    global is_detection_running
+    if is_detection_running:
+        return  # Avoid multiple parallel threads
+    is_detection_running = True
+
     idx = camera_index.get()
     number = phone_var.get().strip()
-    run_camera_detection(camera_index=idx, number=number)
+
+    def detection_task():
+        
+        run_camera_detection(camera_index=idx, number=number)
+        # Reset after thread completes
+        global is_detection_running
+        is_detection_running = False
+
+    threading.Thread(target=detection_task, daemon=True).start()
 
 def stop_detection():
     press()
@@ -38,10 +54,12 @@ def stop_detection():
 def sound1():
     detect.current_sound_function = Playsound1
     sound_btn.configure(text="Sound 1 ✅")
+    sound_btn2.configure(text="Sound 2")
 
 def sound2():
     detect.current_sound_function = playsound2
     sound_btn2.configure(text="Sound 2 ✅")
+    sound_btn.configure(text="Sound 1")
 
 def on_volume_change(value):
     volume_label.configure(text=f"Volume: {int(value)}%")
@@ -95,17 +113,10 @@ cam_label.pack(pady=(0, 10))
 cam_btns = ctk.CTkFrame(cam_frame, fg_color="transparent")
 cam_btns.pack()
 
-btn_cam0 = ctk.CTkButton(cam_btns, text="Cam 0", command=lambda: set_camera(0), **button_style)
-btn_cam0.pack(side="left", padx=10)
-apply_hover_border_effect(btn_cam0, "#454545", "#0d6efd")
-
-btn_cam1 = ctk.CTkButton(cam_btns, text="Cam 1", command=lambda: set_camera(1), **button_style)
-btn_cam1.pack(side="left", padx=10)
-apply_hover_border_effect(btn_cam1, "#454545", "#0d6efd")
-
-btn_cam2 = ctk.CTkButton(cam_btns, text="Cam 2", command=lambda: set_camera(2), **button_style)
-btn_cam2.pack(side="left", padx=10)
-apply_hover_border_effect(btn_cam2, "#454545", "#0d6efd")
+for i in range(3):
+    btn = ctk.CTkButton(cam_btns, text=f"Cam {i}", command=lambda i=i: set_camera(i), **button_style)
+    btn.pack(side="left", padx=10)
+    apply_hover_border_effect(btn, "#454545", "#0d6efd")
 
 # --- Sound Buttons ---
 sound_frame = ctk.CTkFrame(app, fg_color="transparent")
@@ -130,7 +141,7 @@ volume_slider = ctk.CTkSlider(volume_frame, from_=0, to=100, variable=volume_lev
 volume_slider.pack(pady=5)
 
 # --- Phone Number Input ---
-phone_var = ctk.StringVar(value="+91")  # Default country code
+phone_var = ctk.StringVar(value="+91")
 phone_frame = ctk.CTkFrame(app, fg_color="transparent")
 phone_frame.pack(pady=(10, 5))
 
@@ -138,12 +149,10 @@ ctk.CTkLabel(phone_frame, text="Receiver Number:", font=ctk.CTkFont(size=13)).pa
 phone_entry = ctk.CTkEntry(phone_frame, textvariable=phone_var, width=200)
 phone_entry.pack(pady=5)
 
-# Button to test sendmessage
 def trigger_message():
     sendmessage(phone_var.get())
 
 ctk.CTkButton(phone_frame, text="Send Test Message", command=trigger_message, **button_style2).pack(pady=5)
-
 
 # --- Detection Controls ---
 control_frame = ctk.CTkFrame(app, fg_color="transparent")
