@@ -7,7 +7,7 @@ import customtkinter as ctk
 from datetime import datetime
 import threading
 from tkinter import filedialog
-import subprocess  # To run main.py
+import subprocess  
 from sound import playsound2,Playsound1
 import time
 # -------------------- Setup -------------------- #
