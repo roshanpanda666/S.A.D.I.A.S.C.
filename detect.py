@@ -27,6 +27,7 @@ def detect_persons(frame):
     else:
         return False, frame
 
+
 def run_camera_detection(camera_index=0, number=None):
     global message_sent, sound_played
 

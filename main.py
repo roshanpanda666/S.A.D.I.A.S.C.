@@ -8,9 +8,17 @@ from message import sendmessage
 from pymongo import MongoClient
 from datetime import datetime
 import time
+from dotenv import load_dotenv
+import os
+
+# --- Load environment variables ---
+load_dotenv()
+username = os.getenv("MONGO_USERNAME")
+password = os.getenv("MONGO_PASSWORD")
 
 # --- MongoDB Setup ---
-client = MongoClient("mongodb+srv://sabyasachipanda:sadiasc@cluster0.09x2u1i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+mongo_uri = f"mongodb+srv://{username}:{password}@cluster0.09x2u1i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+client = MongoClient(mongo_uri)
 db = client["sadiasc_data"]
 collection = db["sadiasc_collection"]
 
@@ -45,10 +53,12 @@ def start_detection():
     number = phone_var.get().strip()
 
     def detection_task():
-        run_camera_detection(camera_index=idx, number=number)
-        global is_detection_running
-        is_detection_running = False
-        state["detection"] = False
+        try:
+            run_camera_detection(camera_index=idx, number=number)
+        finally:
+            global is_detection_running
+            is_detection_running = False
+            state["detection"] = False
 
     threading.Thread(target=detection_task, daemon=True).start()
 
@@ -93,7 +103,6 @@ def trigger_message():
 # --- State Functions ---
 def get_camera(): return camera_index.get()
 def get_sound(): return 1 if detect.current_sound_function == Playsound1 else 2
-
 def get_volume(): return int(volume_level.get())
 def get_detection_status(): return is_detection_running
 def get_number(): return phone_var.get()
@@ -114,7 +123,7 @@ def get_status(as_text=False):
                 f"number: {state['number']}")
     return state
 
-# --- GUI ---
+# --- GUI Setup ---
 if __name__ == "__main__":
     app = ctk.CTk(fg_color="#12141A")
     app.title("S.A.D.I.A.S.C. Home Interface")
@@ -213,16 +222,24 @@ if __name__ == "__main__":
 
     ctk.CTkButton(app, text="Print Status", command=print_status, **button_style).pack(pady=10)
 
+    @run_in_thread
     def status_logger():
         while True:
             current_status = get_status()
             current_status["timestamp"] = datetime.now()
-            collection.insert_one(current_status)
+
+            # ❗ Remove _id if present to avoid duplicate key error
+            current_status.pop("_id", None)
+
+            try:
+                collection.insert_one(current_status)
+            except Exception as e:
+                print("[MongoDB Insert Error]", e)
+
             print("[Status Logger]\n" + get_status(as_text=True) + "\n")
             time.sleep(5)
 
-    threading.Thread(target=status_logger, daemon=True).start()
-
+    status_logger()  # Starts status logging in background
     app.mainloop()
 
     print("\n--- Final State ---")
